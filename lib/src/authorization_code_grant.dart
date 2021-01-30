@@ -161,12 +161,20 @@ class AuthorizationCodeGrant {
         getParameters,
     String codeVerifier,
     this.disableStateCheck,
+    String state,
+    String stateName,
+    List<String> scopes,
+    Uri redirectEndpoint,
   })  : _basicAuth = basicAuth,
         _httpClient = httpClient ?? http.Client(),
         _delimiter = delimiter ?? ' ',
         _getParameters = getParameters ?? parseJsonParameters,
         _onCredentialsRefreshed = onCredentialsRefreshed,
-        _codeVerifier = codeVerifier ?? _createCodeVerifier();
+        _codeVerifier = codeVerifier ?? _createCodeVerifier(),
+        _state = stateName != null ? _State(stateName) : _State.initial,
+        _stateString = state,
+        _scopes = scopes,
+        _redirectEndpoint = redirectEndpoint;
 
   /// Returns the URL to which the resource owner should be redirected to
   /// authorize this client.
@@ -350,6 +358,38 @@ class AuthorizationCodeGrant {
   void close() {
     if (_httpClient != null) _httpClient.close();
     _httpClient = null;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'identifier': identifier,
+      'authorization_endpoint': authorizationEndpoint?.toString(),
+      'redirect_endpoint': _redirectEndpoint?.toString(),
+      'token_endpoint': tokenEndpoint?.toString(),
+      'secret': secret,
+      'state_name': _state._name,
+      'scopes': _scopes,
+      'state': _stateString,
+      'code_verifier': _codeVerifier,
+      'basic_auth': _basicAuth,
+    };
+  }
+
+  factory AuthorizationCodeGrant.fromJson(Map<String, dynamic> json) {
+    return AuthorizationCodeGrant(
+        json['identifier'],
+        Uri.parse(json['authorization_endpoint']),
+        Uri.parse(json['token_endpoint']),
+        redirectEndpoint: json['redirect_endpoint'] == null
+            ? null
+            : Uri.parse(json['redirect_endpoint']),
+        secret: json['secret'],
+        stateName: json['state_name'],
+        scopes:
+            json['scopes'] == null ? null : List<String>.from(json['scopes']),
+        state: json['state'],
+        codeVerifier: json['code_verifier'],
+        basicAuth: json['basic_auth']);
   }
 }
 
