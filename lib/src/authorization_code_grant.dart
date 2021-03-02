@@ -103,9 +103,6 @@ class AuthorizationCodeGrant {
   /// The current state of the grant object.
   _State _state = _State.initial;
 
-  /// Disables the the state check.
-  bool disableStateCheck = false;
-
   /// Allowed characters for generating the _codeVerifier
   static const String _charset =
       'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
@@ -160,7 +157,6 @@ class AuthorizationCodeGrant {
     Map<String, dynamic> Function(MediaType contentType, String body)
         getParameters,
     String codeVerifier,
-    this.disableStateCheck,
     String state,
     String stateName,
     List<String> scopes,
@@ -197,7 +193,7 @@ class AuthorizationCodeGrant {
   /// It is a [StateError] to call this more than once.
   Uri getAuthorizationUrl(Uri redirect,
       {Iterable<String> scopes, String state}) {
-    if (_state != _State.initial && !disableStateCheck) {
+    if (_state != _State.initial) {
       throw StateError('The authorization URL has already been generated.');
     }
     _state = _State.awaitingResponse;
@@ -248,9 +244,9 @@ class AuthorizationCodeGrant {
   /// Throws [AuthorizationException] if the authorization fails.
   Future<Client> handleAuthorizationResponse(
       Map<String, String> parameters) async {
-    if (_state == _State.initial && !disableStateCheck) {
+    if (_state == _State.initial) {
       throw StateError('The authorization URL has not yet been generated.');
-    } else if (_state == _State.finished && !disableStateCheck) {
+    } else if (_state == _State.finished) {
       throw StateError('The authorization code has already been received.');
     }
     _state = _State.finished;
@@ -297,9 +293,9 @@ class AuthorizationCodeGrant {
   ///
   /// Throws [AuthorizationException] if the authorization fails.
   Future<Client> handleAuthorizationCode(String authorizationCode) async {
-    if (_state == _State.initial && !disableStateCheck) {
+    if (_state == _State.initial) {
       throw StateError('The authorization URL has not yet been generated.');
-    } else if (_state == _State.finished && !disableStateCheck) {
+    } else if (_state == _State.finished) {
       throw StateError('The authorization code has already been received.');
     }
     _state = _State.finished;
